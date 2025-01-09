@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Cat Feeder Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">IoT Cat Feeder Control</h1>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">Manual Control</h4>
+                        <button id="feedNow" class="btn btn-primary w-100 my-2">Give Feed Now</button>
+                        <button id="cleanBowl" class="btn btn-secondary w-100 my-2">Clean Feeding Bowl</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">Automatic Schedule</h4>
+                        <form id="scheduleForm">
+                            <div class="mb-3">
+                                <label for="feedTime" class="form-label">Set Feeding Time</label>
+                                <input type="time" id="feedTime" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Set Schedule</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">Food Storage Check</h4>
+                        <button id="checkFood" class="btn btn-info w-100">Check Remaining Food</button>
+                        <p id="foodStatus" class="text-center mt-3"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'https://cfb9-114-125-79-31.ngrok-free.app'; // Ganti dengan IP ESP32 Anda
+    
+        // Fungsi untuk menampilkan log error
+        function logError(error) {
+            console.error('Error details:', error); // Log lengkap untuk debugging
+            alert(`Error: ${error.response?.data?.message || "Unknown error"}`); // Tampilkan pesan ringkas
+        }
+    
+        // Endpoint Feed Now
+        document.getElementById('feedNow').addEventListener('click', () => {
+            axios.post(`${apiUrl}/feed-now`)
+                .then(response => alert(response.data.message))
+                .catch(logError);
+        });
+    
+        // Endpoint Clean Bowl
+        document.getElementById('cleanBowl').addEventListener('click', () => {
+            axios.post(`${apiUrl}/clean-bowl`)
+                .then(response => alert(response.data.message))
+                .catch(logError);
+        });
+    
+        // Endpoint Set Schedule
+        document.getElementById('scheduleForm').addEventListener('submit', (event) => {
+            event.preventDefault(); // Hindari refresh halaman
+            const feedTime = document.getElementById('feedTime').value;
+    
+            if (!feedTime) {
+                alert("Please enter a valid time."); // Validasi input
+                return;
+            }
+    
+            // Kirim data sebagai URL-encoded form data
+            const formData = new URLSearchParams();
+            formData.append('feedTime', feedTime);
+    
+            axios.post(`${apiUrl}/set-schedule`, formData, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            })
+            .then(response => {
+                console.log('Schedule set successfully:', response.data); // Log success untuk debugging
+                alert(response.data.message);
+            })
+            .catch(logError);
+        });
+    
+        // Endpoint Check Food
+        document.getElementById('checkFood').addEventListener('click', () => {
+            axios.get(`${apiUrl}/check-food`)
+                .then(response => {
+                    console.log('Food level:', response.data); // Log response untuk debugging
+                    document.getElementById('foodStatus').textContent = `Remaining food: ${response.data.remainingFood} cm`;
+                })
+                .catch(logError);
+        });
+    </script>
+    
+    
+</body>
+</html>
